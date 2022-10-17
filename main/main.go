@@ -25,4 +25,18 @@ func main() {
 		fmt.Printf("key=%s, value=%s\n", k, v)
 	}
 
+	m := make(map[int]int)
+
+	go func() {
+		for true {
+			m[1] = 1
+		}
+	}()
+
+	go func() {
+		for {
+			_ = m[1]
+		}
+	}()
+
 }

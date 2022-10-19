@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ZCache/zcache"
 	"container/list"
 	"fmt"
 	"log"
@@ -63,23 +64,46 @@ func main1() {
 //	time.Sleep(time.Second)
 //}
 
-type server int
+//type server int
+//
+//func (s server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+//	log.Println(request.URL.Path)
+//	writer.Write([]byte("Hello world"))
+//}
+//
+//func main() {
+//	var s server
+//
+//	http.ListenAndServe("localhost:8080", &s)
+//}
+//
+//type OpError struct {
+//	op string
+//}
+//
+//func (e *OpError) Error() string {
+//	return fmt.Sprintf("无权执行%s操作", e.op)
+//}
 
-func (s server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	log.Println(request.URL.Path)
-	writer.Write([]byte("Hello world"))
+var db = map[string]string{
+	"Tom":  "630",
+	"Jack": "631",
+	"Sam":  "567",
 }
 
 func main() {
-	var s server
+	zcache.NewGroup("scores", 2<<10, zcache.GetterFunc(
+		func(key string) ([]byte, error) {
+			log.Println("[SlowDB] search key", key)
 
-	http.ListenAndServe("localhost:8080", &s)
-}
+			if v, ok := db[key]; ok {
+				return []byte(v), nil
+			}
 
-type OpError struct {
-	op string
-}
-
-func (e *OpError) Error() string {
-	return fmt.Sprintf("无权执行%s操作", e.op)
+			return nil, fmt.Errorf("%s not exists", key)
+		}))
+	addr := "localhost:9999"
+	peers := zcache.NewHTTPPool(addr)
+	log.Println("zcache is running at", addr)
+	log.Fatal(http.ListenAndServe(addr, peers))
 }

@@ -91,7 +91,7 @@ var db = map[string]string{
 	"Sam":  "567",
 }
 
-func main() {
+func main2() {
 	zcache.NewGroup("scores", 2<<10, zcache.GetterFunc(
 		func(key string) ([]byte, error) {
 			log.Println("[SlowDB] search key", key)
@@ -106,4 +106,13 @@ func main() {
 	peers := zcache.NewHTTPPool(addr)
 	log.Println("zcache is running at", addr)
 	log.Fatal(http.ListenAndServe(addr, peers))
+}
+
+func main() {
+	str := new(string)
+	*str = "GO语言教程"
+	fmt.Printf("输出结果：%s\n", *str)
+
+	str1 := "zzz"
+	fmt.Println(str1)
 }

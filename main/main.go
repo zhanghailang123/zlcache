@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"fmt"
 	"log"
-	"net/http"
 )
 
 func main1() {
@@ -41,7 +40,6 @@ func main1() {
 			_ = m[1]
 		}
 	}()
-
 }
 
 //var m sync.Mutex
@@ -85,34 +83,52 @@ func main1() {
 //	return fmt.Sprintf("无权执行%s操作", e.op)
 //}
 
+//var db = map[string]string{
+//	"Tom":  "630",
+//	"Jack": "631",
+//	"Sam":  "567",
+//}
+//
+//func main2() {
+//	zcache.NewGroup("scores", 2<<10, zcache.GetterFunc(
+//		func(key string) ([]byte, error) {
+//			log.Println("[SlowDB] search key", key)
+//
+//			if v, ok := db[key]; ok {
+//				return []byte(v), nil
+//			}
+//
+//			return nil, fmt.Errorf("%s not exists", key)
+//		}))
+//	addr := "localhost:9999"
+//	peers := zcache.NewHTTPPool(addr)
+//	log.Println("zcache is running at", addr)
+//	log.Fatal(http.ListenAndServe(addr, peers))
+//}
+//
+//func main() {
+//	str := new(string)
+//	*str = "GO语言教程"
+//	fmt.Printf("输出结果：%s\n", *str)
+//
+//	str1 := "zzz"
+//	fmt.Println(str1)
+//}
+
+//10.23 unit test
+
 var db = map[string]string{
 	"Tom":  "630",
-	"Jack": "631",
+	"Jack": "589",
 	"Sam":  "567",
 }
 
-func main2() {
-	zcache.NewGroup("scores", 2<<10, zcache.GetterFunc(
-		func(key string) ([]byte, error) {
-			log.Println("[SlowDB] search key", key)
-
-			if v, ok := db[key]; ok {
-				return []byte(v), nil
-			}
-
-			return nil, fmt.Errorf("%s not exists", key)
-		}))
-	addr := "localhost:9999"
-	peers := zcache.NewHTTPPool(addr)
-	log.Println("zcache is running at", addr)
-	log.Fatal(http.ListenAndServe(addr, peers))
-}
-
-func main() {
-	str := new(string)
-	*str = "GO语言教程"
-	fmt.Printf("输出结果：%s\n", *str)
-
-	str1 := "zzz"
-	fmt.Println(str1)
+func createGroup() *zcache.Group {
+	return zcache.NewGroup("scores", 2<<10, zcache.GetterFunc(func(key string) ([]byte, error) {
+		log.Println("[SlowDB] search key", key)
+		if v, ok := db[key]; ok {
+			return []byte(v), nil
+		}
+		return nil, fmt.Errorf("%s not exists", key)
+	}))
 }

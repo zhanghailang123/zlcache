@@ -3,8 +3,10 @@ package main
 import (
 	"ZCache/zcache"
 	"container/list"
+	"flag"
 	"fmt"
 	"log"
+	"net/http"
 )
 
 func main1() {
@@ -131,4 +133,72 @@ func createGroup() *zcache.Group {
 		}
 		return nil, fmt.Errorf("%s not exists", key)
 	}))
+}
+
+//启动缓存服务器 创建HTTPPool 添加节点信息 注册到zcache中，
+func startCacheServer(addr string, addrs []string, z *zcache.Group) {
+	peers := zcache.NewHTTPPool(addr)
+	peers.Set(addrs...)
+	z.RegisterPeers(peers)
+	log.Println("zcache is running at", addr)
+	log.Fatal(http.ListenAndServe(addr[7:], peers))
+}
+
+//func startApiServer(apiAddr string, group *zcache.Group) {
+//	http.Handle("/api", http.HandlerFunc(
+//		func(w http.ResponseWriter, r *http.Request) {
+//		key := r.URL.Query().Get("key")
+//		view, err := group.Get(key)
+//		if err != nil {
+//			http.Error(w, err.Error(), http.StatusInternalServerError)
+//			return
+//		}
+//		w.Header().Set("Content-Type", "application/octet-stream")
+//		w.Write(view.ByteSlice())
+//
+//	}))
+//}
+
+func startAPIServer(apiAddr string, gee *zcache.Group) {
+	http.Handle("/api", http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			key := r.URL.Query().Get("key")
+			view, err := gee.Get(key)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Write(view.ByteSlice())
+
+		}))
+	log.Println("fontend server is running at", apiAddr)
+	log.Fatal(http.ListenAndServe(apiAddr[7:], nil))
+
+}
+
+func main() {
+	var port int
+	var api bool
+	flag.IntVar(&port, "port", 8001, "zcache server port")
+	flag.BoolVar(&api, "api", false, "Start a api server?")
+	flag.Parse()
+
+	apiAddr := "http://localhost:9999"
+	addrMap := map[int]string{
+		8001: "http://localhost:8001",
+		8002: "http://localhost:8002",
+		8003: "http://localhost:8003",
+	}
+
+	var addrs []string
+	for _, v := range addrMap {
+		addrs = append(addrs, v)
+	}
+
+	zcache := createGroup()
+	if api {
+		go startAPIServer(apiAddr, zcache)
+	}
+	startCacheServer(addrMap[port], []string(addrs), zcache)
 }
